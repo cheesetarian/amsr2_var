@@ -1,0 +1,33 @@
+#DEFINITIONS:  -*-sh-*-
+#
+# Testing of full AMSR2 simulations, pencil beam version.
+#
+# 2018-12-18, Patrick Eriksson
+
+Arts2{
+
+INCLUDE "cfile_common.arts"
+
+# antenna_dlos
+#
+MatrixSet( antenna_dlos, [0] )
+
+
+# Define sensor
+#
+IndexSet( antenna_dim, 1 )
+IndexSet( sensor_norm, 1 )
+#
+sensor_responseInit
+sensor_checkedCalc
+
+
+# Calculate and save
+#
+yCalc
+#
+output_file_formatSetAscii
+WriteXML( output_file_format, y, "y.xml" )
+WriteXML( output_file_format, y_geo, "y_geo.xml" )
+
+}

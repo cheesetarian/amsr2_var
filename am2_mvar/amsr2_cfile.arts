@@ -1,0 +1,42 @@
+#DEFINITIONS:  -*-sh-*-
+#
+# Testing of full AMSR2 simulations, full antenna version.
+#
+# 2018-12-18, Patrick Eriksson
+
+Arts2{
+
+INCLUDE "cfile_common.arts"
+
+
+# Determine antenna_dlos
+#
+VectorCreate( antenna_reference_los )
+ReadXML( antenna_reference_los, "antenna_reference_los.xml" )
+MatrixCreate( antenna_target_los )
+ReadXML( antenna_target_los, "antenna_target_los.xml" )
+#
+DiffZaAa( antenna_dlos, antenna_reference_los, antenna_target_los )
+
+
+# Define sensor
+#
+IndexSet( sensor_norm, 1 )
+IndexSet( antenna_dim, 2 )
+#
+ReadXML( antenna_response, "antenna_response.xml" )
+#
+sensor_responseInit
+sensor_responseAntenna
+sensor_checkedCalc
+
+
+# Calculate and save
+#
+yCalc
+#
+output_file_formatSetAscii
+WriteXML( output_file_format, y, "y.xml" )
+WriteXML( output_file_format, y_geo, "y_geo.xml" )
+
+}

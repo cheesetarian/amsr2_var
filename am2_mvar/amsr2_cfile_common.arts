@@ -1,0 +1,117 @@
+#DEFINITIONS:  -*-sh-*-
+#
+# Parts not dependent on if antenna is included or not
+#
+# 2018-12-18, Patrick Eriksson
+
+Arts2{
+
+INCLUDE "general/general.arts"
+INCLUDE "general/continua.arts"
+INCLUDE "general/agendas.arts"
+INCLUDE "general/planet_earth.arts"
+
+# Agenda for scalar gas absorption calculation
+Copy(abs_xsec_agenda, abs_xsec_agenda__noCIA )
+
+# (standard) emission calculation
+Copy( iy_main_agenda, iy_main_agenda__Emission )
+
+# cosmic background radiation
+Copy( iy_space_agenda, iy_space_agenda__CosmicBackground )
+
+# on-the-fly absorption
+Copy( propmat_clearsky_agenda, propmat_clearsky_agenda__OnTheFly )
+
+# sensor-only path
+Copy( ppath_agenda, ppath_agenda__FollowSensorLosPath )
+
+# no refraction
+Copy( ppath_step_agenda, ppath_step_agenda__GeometricPath )
+
+# geo-positioning
+AgendaSet( geo_pos_agenda ){
+  geo_posEndOfPpath
+}
+
+
+# Load predefined data
+#
+ReadXML( f_grid, "f_grid.xml" )
+ReadXML( lat_grid, "lat_grid.xml" )
+ReadXML( lon_grid, "lon_grid.xml" )
+ReadXML( p_grid, "p_grid.xml" )
+ReadXML( t_field, "t_field.xml" )
+ReadXML( z_field, "z_field.xml" )
+ReadXML( vmr_field, "vmr_field.xml" )
+ReadXML( sensor_pos, "sensor_pos.xml" )
+ReadXML( sensor_los, "sensor_los.xml" )
+ReadXML( surface_props_names, "surface_props_names" )
+ReadXML( surface_props_data, "surface_props_data" )
+ReadXML( z_surface, "z_surface.xml" )
+
+# Basic settings
+#
+AtmosphereSet3D
+IndexSet( stokes_dim, 2 )
+StringSet( iy_unit, "PlanckBT" )
+
+# no jacobian calculation
+jacobianOff
+
+# no scattering
+cloudboxOff
+
+# lat and lon true can be left empty for 3D
+VectorSet( lat_true, [] ) 
+VectorSet( lon_true, [] ) 
+
+
+# Definition of species
+# 
+abs_speciesSet( species = [ 
+   "N2-SelfContStandardType",
+   "O2-PWR98",
+   "H2O-PWR98",
+   "liquidcloud-ELL07" 
+] )
+
+# No transitions needed
+# 
+abs_lines_per_speciesSetEmpty
+
+
+# Define surface RT properties
+#
+VectorCreate( trv )
+#
+AgendaSet( iy_surface_agenda ){
+  specular_losCalc
+  ppathCalc( rte_pos=rtp_pos, rte_los=specular_los )
+  ArrayOfStringSet( iy_aux_vars, ["Optical depth"] )
+  iyEmissionStandard
+  transmittanceFromIy_aux( transmittance=trv )
+  Print(trv,0)
+  SurfaceFastem( transmittance=trv )
+  iySurfaceRtpropCalc
+}
+
+
+# Check data and settings (beside sensor)
+# 
+abs_xsec_agenda_checkedCalc
+propmat_clearsky_agenda_checkedCalc
+atmfields_checkedCalc( bad_partition_functions_ok = 1 )
+atmgeom_checkedCalc
+cloudbox_checkedCalc
+
+# Determine mblock_dlos_grid
+#
+VectorCreate( mblock_reference_los )
+ReadXML( mblock_reference_los, "mblock_reference_los.xml" )
+MatrixCreate( mblock_target_los )
+ReadXML( mblock_target_los, "mblock_target_los.xml" )
+#
+DiffZaAa( mblock_dlos_grid, mblock_reference_los, mblock_target_los )
+
+}
